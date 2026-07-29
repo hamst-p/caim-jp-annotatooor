@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { AlertTriangle, FolderPlus, Plus, RefreshCw, Upload } from "lucide-react";
+import { AlertTriangle, FolderPlus, RefreshCw, Upload } from "lucide-react";
 
 import { AudioPlayerProvider } from "@/components/translation-manager/audio-player-provider";
 import {
@@ -56,6 +56,7 @@ function ManagerBody() {
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [projectDialogMode, setProjectDialogMode] = useState<ProjectDialogMode>("create");
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [showFurigana, setShowFurigana] = useState(true);
   // ダイアログを開くたびに key を進めて再マウントし、入力内容をリセットする。
   const [dialogInstance, setDialogInstance] = useState(0);
 
@@ -96,7 +97,7 @@ function ManagerBody() {
     () => effectiveRows.map((row) => row.japanese),
     [effectiveRows],
   );
-  const furigana = useFurigana(japaneseTexts);
+  const furigana = useFurigana(japaneseTexts, showFurigana);
 
   const allRowIds = useMemo(() => rowsApi.rows.map((row) => row.id), [rowsApi.rows]);
   const isFiltered = query.trim().length > 0 || filter !== "all";
@@ -171,13 +172,6 @@ function ManagerBody() {
               icon={<FolderPlus aria-hidden="true" />}
               onClick={() => openProjectDialog("create")}
               disabled={projects.isMutating}
-            />
-            <HeaderButton
-              label="Add Phrase"
-              tooltip="Append an empty row"
-              icon={<Plus aria-hidden="true" />}
-              onClick={() => void rowsApi.addPhrase()}
-              disabled={!projects.selectedProjectId || isBusy}
             />
             <HeaderButton
               label="Bulk Import"
@@ -286,6 +280,9 @@ function ManagerBody() {
               }}
               onRetryLoad={() => void rowsApi.refresh()}
               onAddPhrase={() => void rowsApi.addPhrase()}
+              addDisabled={!projects.selectedProjectId || isBusy}
+              showFurigana={showFurigana}
+              onToggleFurigana={() => setShowFurigana((current) => !current)}
             />
           </>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Inbox, Loader2, RefreshCw, Search } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, Inbox, Loader2, Plus, RefreshCw, Search } from "lucide-react";
 
 import {
   ROW_GRID_CLASS,
@@ -9,6 +9,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { FuriganaSegment } from "@/lib/furigana/segments";
 import { cn } from "@/lib/utils";
 import type { AppError } from "@/types/result";
@@ -42,6 +43,10 @@ export type TranslationTableProps = {
   onMove: (row: TranslationRow, direction: "up" | "down") => Promise<void>;
   onRetryLoad: () => void;
   onAddPhrase: () => void;
+  /** 追加処理の実行中はボタンを止める。 */
+  addDisabled: boolean;
+  showFurigana: boolean;
+  onToggleFurigana: () => void;
 };
 
 export function TranslationTable(props: TranslationTableProps) {
@@ -67,6 +72,9 @@ export function TranslationTable(props: TranslationTableProps) {
     onMove,
     onRetryLoad,
     onAddPhrase,
+    addDisabled,
+    showFurigana,
+    onToggleFurigana,
   } = props;
 
   if (status === "loading") {
@@ -104,7 +112,7 @@ export function TranslationTable(props: TranslationTableProps) {
       {/* 残りの画面高を使い、縦横のスクロールはテーブル内に収める。 */}
       <div className="min-h-0 flex-1 overflow-auto rounded-xl">
         <div className="min-w-full">
-          <TableHeader />
+          <TableHeader showFurigana={showFurigana} onToggleFurigana={onToggleFurigana} />
 
           {rows.length === 0 ? (
             <EmptyState isFiltered={isFiltered} onAddPhrase={onAddPhrase} />
@@ -120,7 +128,7 @@ export function TranslationTable(props: TranslationTableProps) {
                     rowNumber={index + 1}
                     saveState={getSaveState(row.id)}
                     saveError={getSaveError(row.id)}
-                    furigana={getFurigana(getDraft(row).japanese)}
+                    furigana={showFurigana ? getFurigana(getDraft(row).japanese) : null}
                     locked={lockedRowIds.has(row.id)}
                     moveDisabled={moveDisabled}
                     canMoveUp={index > 0}
@@ -138,13 +146,94 @@ export function TranslationTable(props: TranslationTableProps) {
               })}
             </div>
           )}
+
+          {rows.length > 0 && (
+            <AddPhraseFooter onAddPhrase={onAddPhrase} disabled={addDisabled} />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function TableHeader() {
+/** Japanese 列のふりがな表示を切り替える。 */
+function FuriganaToggle({
+  showFurigana,
+  onToggle,
+}: {
+  showFurigana: boolean;
+  onToggle: () => void;
+}) {
+  const label = showFurigana ? "Hide furigana" : "Show furigana";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-pressed={showFurigana}
+          aria-label={label}
+          className={cn(
+            "flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
+            "hover:bg-background focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none",
+            showFurigana
+              ? "border-border text-foreground"
+              : "border-transparent text-muted-foreground",
+          )}
+        >
+          {showFurigana ? (
+            <Eye className="size-3" aria-hidden="true" />
+          ) : (
+            <EyeOff className="size-3" aria-hidden="true" />
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** 最終行の下に置く、フレーズ追加ボタン。 */
+function AddPhraseFooter({
+  onAddPhrase,
+  disabled,
+}: {
+  onAddPhrase: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="flex min-w-full justify-center border-t px-2 py-3">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={onAddPhrase}
+            disabled={disabled}
+            aria-label="Add a new phrase at the end"
+            className={cn(
+              "flex size-8 items-center justify-center rounded-full border text-muted-foreground transition-colors",
+              "hover:border-ring hover:bg-muted hover:text-foreground",
+              "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none",
+              "disabled:pointer-events-none disabled:opacity-40",
+            )}
+          >
+            <Plus className="size-4" aria-hidden="true" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>Add phrase</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
+function TableHeader({
+  showFurigana = true,
+  onToggleFurigana,
+}: {
+  showFurigana?: boolean;
+  onToggleFurigana?: () => void;
+}) {
   return (
     <div
       role="row"
@@ -157,7 +246,12 @@ function TableHeader() {
         #
       </div>
       <div className="border-r px-2 py-2">Original</div>
-      <div className="border-r px-2 py-2">Japanese</div>
+      <div className="flex items-center gap-1.5 border-r px-2 py-2">
+        Japanese
+        {onToggleFurigana && (
+          <FuriganaToggle showFurigana={showFurigana} onToggle={onToggleFurigana} />
+        )}
+      </div>
       <div className="border-r px-2 py-2">Reading</div>
       <div className="border-r px-2 py-2">Audio</div>
       <div className="px-2 py-2 text-center text-muted-foreground">
