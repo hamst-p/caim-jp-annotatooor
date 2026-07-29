@@ -160,6 +160,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setState((current) => ({ ...current, volume: clamped }));
   }, []);
 
+  const getCurrentTime = useCallback(() => audioRef.current?.currentTime ?? 0, []);
+
   const release = useCallback((rowId: string) => {
     if (activeRowIdRef.current !== rowId) return;
     const audio = audioRef.current;
@@ -190,8 +192,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       setPlaybackRate,
       setVolume,
       release,
+      getCurrentTime,
     }),
-    [state, play, pause, stop, seek, setPlaybackRate, setVolume, release],
+    [state, play, pause, stop, seek, setPlaybackRate, setVolume, release, getCurrentTime],
   );
 
   return <AudioPlayerContext.Provider value={value}>{children}</AudioPlayerContext.Provider>;

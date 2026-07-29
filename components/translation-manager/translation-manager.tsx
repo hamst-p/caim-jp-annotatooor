@@ -10,6 +10,7 @@ import {
 } from "@/components/translation-manager/bulk-import-dialog";
 import { ConnectionStatus } from "@/components/translation-manager/connection-status";
 import { MissingEnvNotice } from "@/components/translation-manager/missing-env-notice";
+import { NowPlayingPanel } from "@/components/translation-manager/now-playing-panel";
 import {
   ProjectDialog,
   type ProjectDialogMode,
@@ -270,6 +271,12 @@ function ManagerBody() {
             </Alert>
           ) : (
             <>
+              <NowPlayingPanel
+                rows={effectiveRows}
+                getFurigana={furigana.getSegments}
+                showFurigana={showFurigana}
+              />
+
               <SearchFilters
                 query={query}
                 onQueryChange={setQuery}

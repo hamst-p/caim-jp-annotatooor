@@ -24,6 +24,13 @@ export type AudioPlayerApi = AudioPlaybackState & {
   setVolume: (volume: number) => void;
   /** 行が削除／差し替えされたときに読み込みを解除する。 */
   release: (rowId: string) => void;
+  /**
+   * 現在の再生位置を直接読む。
+   * `currentTime` は timeupdate (約 4Hz) 由来で粗いため、
+   * カラオケ表示のように滑らかさが要る箇所は requestAnimationFrame と
+   * 組み合わせてこちらを使う (state を更新しないので再描画も起きない)。
+   */
+  getCurrentTime: () => number;
 };
 
 export const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
