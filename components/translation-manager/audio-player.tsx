@@ -36,7 +36,9 @@ export function AudioPlayer({
     return Math.min(100, (displayedTime / totalDuration) * 100);
   }, [displayedTime, totalDuration]);
 
-  const isSlow = isActive && player.playbackRate === 0.75;
+  const isNormalSpeed = isActive && player.playbackRate === 1;
+  const isThreeQuarterSpeed = isActive && player.playbackRate === 0.75;
+  const isHalfSpeed = isActive && player.playbackRate === 0.5;
 
   return (
     <div className="flex flex-col gap-2">
@@ -45,7 +47,7 @@ export function AudioPlayer({
           <TooltipTrigger asChild>
             <Button
               size="icon-sm"
-              variant={isPlaying && !isSlow ? "default" : "outline"}
+              variant={isPlaying && isNormalSpeed ? "default" : "outline"}
               onClick={() => {
                 setScrubbing(null);
                 player.play(rowId, url, 1);
@@ -62,7 +64,7 @@ export function AudioPlayer({
           <TooltipTrigger asChild>
             <Button
               size="sm"
-              variant={isPlaying && isSlow ? "default" : "outline"}
+              variant={isPlaying && isThreeQuarterSpeed ? "default" : "outline"}
               onClick={() => {
                 setScrubbing(null);
                 player.play(rowId, url, 0.75);
@@ -74,6 +76,24 @@ export function AudioPlayer({
             </Button>
           </TooltipTrigger>
           <TooltipContent>Play slowly (0.75x)</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant={isPlaying && isHalfSpeed ? "default" : "outline"}
+              onClick={() => {
+                setScrubbing(null);
+                player.play(rowId, url, 0.5);
+              }}
+              aria-label="Play at 0.5x speed"
+            >
+              <Gauge aria-hidden="true" />
+              0.5x
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Play slowly (0.5x)</TooltipContent>
         </Tooltip>
 
         <Tooltip>
