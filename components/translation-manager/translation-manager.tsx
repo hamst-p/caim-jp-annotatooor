@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useProjects } from "@/hooks/use-projects";
+import { useFurigana } from "@/hooks/use-furigana";
 import { useRowAutosave } from "@/hooks/use-row-autosave";
 import { useTranslationRows } from "@/hooks/use-translation-rows";
 import { getMissingSupabaseEnvKeys } from "@/lib/supabase/client";
@@ -89,6 +90,13 @@ function ManagerBody() {
   );
 
   const summary = useMemo(() => summarizeRows(effectiveRows), [effectiveRows]);
+
+  // Japanese 列のふりがな。表示中の文言をまとめて 1 リクエストで取得する。
+  const japaneseTexts = useMemo(
+    () => effectiveRows.map((row) => row.japanese),
+    [effectiveRows],
+  );
+  const furigana = useFurigana(japaneseTexts);
 
   const allRowIds = useMemo(() => rowsApi.rows.map((row) => row.id), [rowsApi.rows]);
   const isFiltered = query.trim().length > 0 || filter !== "all";
@@ -257,6 +265,7 @@ function ManagerBody() {
               moveDisabled={isFiltered}
               isFiltered={isFiltered}
               getDraft={autosave.getDraft}
+              getFurigana={furigana.getSegments}
               getSaveState={autosave.getState}
               getSaveError={autosave.getError}
               onFieldChange={(row: TranslationRow, field: EditableField, value: string) =>

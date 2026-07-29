@@ -5,9 +5,11 @@ import {
   ArrowDown,
   ArrowUp,
   Copy,
+  FileAudio,
   Loader2,
   MoreVertical,
   Plus,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 
@@ -38,20 +40,29 @@ export function RowActions({
   canMoveUp,
   canMoveDown,
   disabled,
+  hasAudio,
+  audioBusy,
   onAddBelow,
   onDuplicate,
   onDelete,
   onMove,
+  onReplaceAudio,
+  onDeleteAudio,
 }: {
   row: TranslationRow;
   rowNumber: number;
   canMoveUp: boolean;
   canMoveDown: boolean;
   disabled: boolean;
+  hasAudio: boolean;
+  /** アップロード中・削除中は音声操作を止める。 */
+  audioBusy: boolean;
   onAddBelow: () => Promise<void>;
   onDuplicate: () => Promise<void>;
   onDelete: () => Promise<void>;
   onMove: (direction: "up" | "down") => Promise<void>;
+  onReplaceAudio: () => void;
+  onDeleteAudio: () => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -82,7 +93,7 @@ export function RowActions({
           <TooltipContent>Row actions</TooltipContent>
         </Tooltip>
 
-        <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onSelect={() => void onAddBelow()}>
             <Plus aria-hidden="true" />
             Add below
@@ -100,10 +111,28 @@ export function RowActions({
             <ArrowDown aria-hidden="true" />
             Move down
           </DropdownMenuItem>
+          {hasAudio && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled={audioBusy} onSelect={() => onReplaceAudio()}>
+                <RefreshCw aria-hidden="true" />
+                Replace audio
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={audioBusy}
+                onSelect={() => onDeleteAudio()}
+              >
+                <FileAudio aria-hidden="true" />
+                Delete audio
+              </DropdownMenuItem>
+            </>
+          )}
+
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onSelect={() => setConfirmOpen(true)}>
             <Trash2 aria-hidden="true" />
-            Delete
+            Delete row
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

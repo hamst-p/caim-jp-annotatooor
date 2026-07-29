@@ -2,6 +2,7 @@
 
 import { Search, X } from "lucide-react";
 
+import { VolumeControl } from "@/components/translation-manager/volume-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -81,11 +82,15 @@ export function SearchFilters({
         </Select>
       </div>
 
-      <p className="text-xs text-muted-foreground" aria-live="polite">
-        {isFiltered
-          ? `Showing ${visibleCount} of ${totalCount} phrases`
-          : `${totalCount} phrase${totalCount === 1 ? "" : "s"}`}
-      </p>
+      <div className="flex items-center gap-3">
+        {/* 音量はプレイヤー共通なので、行ごとではなくここに 1 つだけ置く。 */}
+        <VolumeControl className="shrink-0" />
+        <p className="text-xs whitespace-nowrap text-muted-foreground" aria-live="polite">
+          {isFiltered
+            ? `Showing ${visibleCount} of ${totalCount} phrases`
+            : `${totalCount} phrase${totalCount === 1 ? "" : "s"}`}
+        </p>
+      </div>
     </div>
   );
 }

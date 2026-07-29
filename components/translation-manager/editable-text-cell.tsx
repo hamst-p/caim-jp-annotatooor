@@ -14,6 +14,7 @@ export function EditableTextCell({
   disabled,
   invalid,
   className,
+  autoFocus,
   onChange,
   onBlur,
 }: {
@@ -24,6 +25,8 @@ export function EditableTextCell({
   disabled: boolean;
   invalid?: boolean;
   className?: string;
+  /** 表示モードから切り替わった直後にフォーカスする用途。 */
+  autoFocus?: boolean;
   onChange: (value: string) => void;
   onBlur?: () => void;
 }) {
@@ -62,6 +65,7 @@ export function EditableTextCell({
       aria-invalid={invalid ? true : undefined}
       placeholder={placeholder}
       spellCheck={false}
+      autoFocus={autoFocus}
       onChange={(event) => {
         onChange(event.target.value);
         resize();

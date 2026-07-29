@@ -4,23 +4,31 @@ import { useMemo } from "react";
 import { Music } from "lucide-react";
 
 import { AudioPlayer } from "@/components/translation-manager/audio-player";
-import { AudioUploader, DeleteAudioButton } from "@/components/translation-manager/audio-uploader";
+import {
+  AudioDropzone,
+  AudioFileInput,
+  AudioUploadProgress,
+  DeleteAudioDialog,
+} from "@/components/translation-manager/audio-uploader";
 import { EditableTextCell } from "@/components/translation-manager/editable-text-cell";
+import { JapaneseCell } from "@/components/translation-manager/japanese-cell";
 import { RowActions } from "@/components/translation-manager/row-actions";
+import { RowStatusIndicator } from "@/components/translation-manager/row-status-indicator";
 import { RowSaveIndicator } from "@/components/translation-manager/save-status";
-import { Badge } from "@/components/ui/badge";
 import { useAudioPlayer } from "@/hooks/use-audio-player";
+import { useRowAudioActions } from "@/hooks/use-row-audio-actions";
 import { formatDuration } from "@/lib/audio/duration";
+import type { FuriganaSegment } from "@/lib/furigana/segments";
 import { getAudioUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 import { formatFileSize } from "@/lib/utils/sanitize-file-name";
-import { getRowStatuses, ROW_STATUS_LABEL } from "@/lib/utils/row-status";
-import type { AppError } from "@/types/result";
+import { getRowStatuses } from "@/lib/utils/row-status";
+import { formatAppError, type AppError } from "@/types/result";
 import type { EditableDraft, EditableField, RowSaveState, TranslationRow } from "@/types/translation";
 
 /** ヘッダー行とデータ行で共有する 4 列 + 行番号 + 操作列のグリッド。 */
 export const ROW_GRID_CLASS =
-  "grid w-full min-w-[54rem] grid-cols-[2.75rem_minmax(11rem,1.15fr)_minmax(11rem,1fr)_minmax(10rem,0.9fr)_minmax(16rem,1fr)_2.75rem]";
+  "grid w-full min-w-[54.75rem] grid-cols-[3.5rem_minmax(11rem,1.15fr)_minmax(11rem,1fr)_minmax(10rem,0.9fr)_minmax(16rem,1fr)_2.75rem]";
 
 export function TranslationRowItem({
   row,
@@ -28,6 +36,7 @@ export function TranslationRowItem({
   rowNumber,
   saveState,
   saveError,
+  furigana,
   locked,
   moveDisabled,
   canMoveUp,
@@ -46,6 +55,8 @@ export function TranslationRowItem({
   rowNumber: number;
   saveState: RowSaveState;
   saveError: AppError | null;
+  /** Japanese 列のふりがな。未取得なら null。 */
+  furigana: FuriganaSegment[] | null;
   locked: boolean;
   moveDisabled: boolean;
   canMoveUp: boolean;
@@ -68,6 +79,10 @@ export function TranslationRowItem({
 
   const audioUrl = useMemo(() => getAudioUrl(row.audio_path), [row.audio_path]);
 
+  // アップロード / 差し替え / 削除は行に 1 セットだけ持ち、
+  // ドロップゾーンと「⋮」メニューの両方から使う。
+  const audio = useRowAudioActions({ row, onUpdated: onRowUpdated });
+
   return (
     <div
       data-row-id={row.id}
@@ -86,6 +101,7 @@ export function TranslationRowItem({
       {/* 行番号 (左端に固定) */}
       <div className="sticky left-0 z-10 flex flex-col items-center gap-1 border-r bg-inherit px-1 py-2">
         <span className="text-xs font-medium text-muted-foreground tabular-nums">{rowNumber}</span>
+        <RowStatusIndicator statuses={statuses} rowNumber={rowNumber} />
         {isRowPlaying && (
           <Music
             className="size-3.5 animate-pulse text-sky-600 dark:text-sky-400"
@@ -106,20 +122,6 @@ export function TranslationRowItem({
           onChange={(value) => onFieldChange("original", value)}
           onBlur={onFieldBlur}
         />
-        <div className="flex flex-wrap items-center gap-1">
-          {statuses.map((status) => (
-            <Badge
-              key={status}
-              variant={status === "complete" ? "secondary" : "outline"}
-              className={cn(
-                "text-[0.7rem]",
-                status === "complete" && "text-emerald-700 dark:text-emerald-300",
-              )}
-            >
-              {ROW_STATUS_LABEL[status]}
-            </Badge>
-          ))}
-        </div>
         <RowSaveIndicator state={saveState} onRetry={onRetrySave} />
         {saveError && saveState === "error" && (
           <p className="text-[0.7rem] text-destructive" role="alert">
@@ -130,12 +132,13 @@ export function TranslationRowItem({
 
       {/* Japanese */}
       <div className="border-r px-2 py-2">
-        <EditableTextCell
+        <JapaneseCell
           id={`japanese-${row.id}`}
           label={`Japanese translation, row ${rowNumber}`}
           value={draft.japanese}
           placeholder="日本語訳を入力"
           disabled={locked}
+          segments={furigana}
           onChange={(value) => onFieldChange("japanese", value)}
           onBlur={onFieldBlur}
         />
@@ -157,19 +160,26 @@ export function TranslationRowItem({
 
       {/* Audio */}
       <div className="flex flex-col gap-2 border-r px-2 py-2">
-        {row.audio_path && audioUrl ? (
+        <AudioFileInput
+          inputRef={audio.inputRef}
+          disabled={locked || audio.isBusy}
+          onFiles={audio.handleFiles}
+        />
+
+        {audio.isUploading ? (
+          <AudioUploadProgress progress={audio.progress} onCancel={audio.cancelUpload} />
+        ) : row.audio_path && audioUrl ? (
           <>
             <AudioPlayer rowId={row.id} url={audioUrl} fallbackDuration={row.audio_duration} />
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-              <span className="max-w-full truncate font-medium text-foreground" title={row.audio_file_name ?? ""}>
+              <span
+                className="max-w-full truncate font-medium text-foreground"
+                title={row.audio_file_name ?? ""}
+              >
                 {row.audio_file_name ?? "audio.mp3"}
               </span>
               <span>{formatFileSize(row.audio_size)}</span>
               <span>{formatDuration(row.audio_duration)}</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <AudioUploader row={row} variant="replace" disabled={locked} onUpdated={onRowUpdated} />
-              <DeleteAudioButton row={row} disabled={locked} onUpdated={onRowUpdated} />
             </div>
           </>
         ) : row.audio_path && !audioUrl ? (
@@ -177,7 +187,17 @@ export function TranslationRowItem({
             Could not build a playback URL. Check the Supabase configuration.
           </p>
         ) : (
-          <AudioUploader row={row} variant="empty" disabled={locked} onUpdated={onRowUpdated} />
+          <AudioDropzone
+            disabled={locked || audio.isBusy}
+            onBrowse={audio.openFilePicker}
+            onFiles={audio.handleFiles}
+          />
+        )}
+
+        {audio.uploadError && (
+          <p className="text-xs text-destructive" role="alert">
+            {formatAppError(audio.uploadError)}
+          </p>
         )}
       </div>
 
@@ -189,12 +209,24 @@ export function TranslationRowItem({
           canMoveUp={canMoveUp && !moveDisabled}
           canMoveDown={canMoveDown && !moveDisabled}
           disabled={locked}
+          hasAudio={Boolean(row.audio_path)}
+          audioBusy={audio.isBusy}
           onAddBelow={onAddBelow}
           onDuplicate={onDuplicate}
           onDelete={onDelete}
           onMove={onMove}
+          onReplaceAudio={audio.openFilePicker}
+          onDeleteAudio={() => audio.setDeleteDialogOpen(true)}
         />
       </div>
+
+      <DeleteAudioDialog
+        open={audio.deleteDialogOpen}
+        fileName={row.audio_file_name}
+        isDeleting={audio.isDeleting}
+        onOpenChange={audio.setDeleteDialogOpen}
+        onConfirm={() => void audio.confirmDelete()}
+      />
     </div>
   );
 }

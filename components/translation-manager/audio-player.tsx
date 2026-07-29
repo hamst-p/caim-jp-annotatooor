@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Gauge, Pause, Play, Square, Volume2, VolumeX } from "lucide-react";
+import { Gauge, Pause, Play, Square } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -135,7 +135,7 @@ export function AudioPlayer({
             isActive ? "text-foreground" : "text-muted-foreground",
           )}
         >
-          {formatDuration(displayedTime)} / {formatDuration(totalDuration || null)}
+          {isLoading ? "Loading…" : `${formatDuration(displayedTime)} / ${formatDuration(totalDuration || null)}`}
         </span>
       </div>
 
@@ -153,32 +153,6 @@ export function AudioPlayer({
           setScrubbing(null);
         }}
       />
-
-      <div className="flex items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size="icon-xs"
-              variant="ghost"
-              onClick={() => player.setVolume(player.volume > 0 ? 0 : 1)}
-              aria-label={player.volume > 0 ? "Mute" : "Unmute"}
-            >
-              {player.volume > 0 ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Volume</TooltipContent>
-        </Tooltip>
-        <Slider
-          value={[player.volume * 100]}
-          min={0}
-          max={100}
-          step={1}
-          aria-label="Volume"
-          className="max-w-28"
-          onValueChange={([next]) => player.setVolume(next / 100)}
-        />
-        {isLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
-      </div>
 
       {error && (
         <p className="text-xs text-destructive" role="alert">

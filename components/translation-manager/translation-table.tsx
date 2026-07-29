@@ -9,6 +9,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { FuriganaSegment } from "@/lib/furigana/segments";
 import { cn } from "@/lib/utils";
 import type { AppError } from "@/types/result";
 import type {
@@ -28,6 +29,7 @@ export type TranslationTableProps = {
   moveDisabled: boolean;
   isFiltered: boolean;
   getDraft: (row: TranslationRow) => EditableDraft;
+  getFurigana: (text: string) => FuriganaSegment[] | null;
   getSaveState: (rowId: string) => RowSaveState;
   getSaveError: (rowId: string) => AppError | null;
   onFieldChange: (row: TranslationRow, field: EditableField, value: string) => void;
@@ -52,6 +54,7 @@ export function TranslationTable(props: TranslationTableProps) {
     moveDisabled,
     isFiltered,
     getDraft,
+    getFurigana,
     getSaveState,
     getSaveError,
     onFieldChange,
@@ -117,6 +120,7 @@ export function TranslationTable(props: TranslationTableProps) {
                     rowNumber={index + 1}
                     saveState={getSaveState(row.id)}
                     saveError={getSaveError(row.id)}
+                    furigana={getFurigana(getDraft(row).japanese)}
                     locked={lockedRowIds.has(row.id)}
                     moveDisabled={moveDisabled}
                     canMoveUp={index > 0}
