@@ -17,18 +17,26 @@ import {
 import { ProjectSelector } from "@/components/translation-manager/project-selector";
 import { SaveStatus } from "@/components/translation-manager/save-status";
 import { SearchFilters } from "@/components/translation-manager/search-filters";
-import { SummaryCards } from "@/components/translation-manager/summary-cards";
+import { SummarySidebar } from "@/components/translation-manager/summary-sidebar";
 import { ThemeToggle } from "@/components/translation-manager/theme-toggle";
 import { TranslationTable } from "@/components/translation-manager/translation-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useProjects } from "@/hooks/use-projects";
 import { useFurigana } from "@/hooks/use-furigana";
 import { useRowAutosave } from "@/hooks/use-row-autosave";
 import { useTranslationRows } from "@/hooks/use-translation-rows";
 import { getMissingSupabaseEnvKeys } from "@/lib/supabase/client";
-import { matchesFilter, matchesQuery, summarizeRows } from "@/lib/utils/row-status";
+import {
+  matchesFilter,
+  matchesQuery,
+  summarizeRows,
+} from "@/lib/utils/row-status";
 import type {
   EditableField,
   RowFilter,
@@ -54,9 +62,11 @@ function ManagerBody() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<RowFilter>("all");
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
-  const [projectDialogMode, setProjectDialogMode] = useState<ProjectDialogMode>("create");
+  const [projectDialogMode, setProjectDialogMode] =
+    useState<ProjectDialogMode>("create");
   const [bulkOpen, setBulkOpen] = useState(false);
   const [showFurigana, setShowFurigana] = useState(true);
+  const [summaryOpen, setSummaryOpen] = useState(true);
   // ダイアログを開くたびに key を進めて再マウントし、入力内容をリセットする。
   const [dialogInstance, setDialogInstance] = useState(0);
 
@@ -86,7 +96,9 @@ function ManagerBody() {
 
   const visibleRows = useMemo(
     () =>
-      effectiveRows.filter((row) => matchesFilter(row, filter) && matchesQuery(row, query)),
+      effectiveRows.filter(
+        (row) => matchesFilter(row, filter) && matchesQuery(row, query),
+      ),
     [effectiveRows, filter, query],
   );
 
@@ -99,7 +111,10 @@ function ManagerBody() {
   );
   const furigana = useFurigana(japaneseTexts, showFurigana);
 
-  const allRowIds = useMemo(() => rowsApi.rows.map((row) => row.id), [rowsApi.rows]);
+  const allRowIds = useMemo(
+    () => rowsApi.rows.map((row) => row.id),
+    [rowsApi.rows],
+  );
   const isFiltered = query.trim().length > 0 || filter !== "all";
 
   const handleDeleteRow = useCallback(
@@ -116,7 +131,11 @@ function ManagerBody() {
         projectDialogMode === "create"
           ? await projects.addProject(name, description)
           : projects.selectedProjectId
-            ? await projects.renameProject(projects.selectedProjectId, name, description)
+            ? await projects.renameProject(
+                projects.selectedProjectId,
+                name,
+                description,
+              )
             : null;
       if (result) setProjectDialogOpen(false);
     },
@@ -136,7 +155,8 @@ function ManagerBody() {
   }, [projects, rowsApi]);
 
   const isBusy = rowsApi.isMutating || projects.isMutating;
-  const noProject = projects.status === "loaded" && projects.projects.length === 0;
+  const noProject =
+    projects.status === "loaded" && projects.projects.length === 0;
 
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
@@ -185,7 +205,9 @@ function ManagerBody() {
               tooltip="Reload projects and phrases from Supabase"
               icon={
                 <RefreshCw
-                  className={rowsApi.status === "refreshing" ? "animate-spin" : undefined}
+                  className={
+                    rowsApi.status === "refreshing" ? "animate-spin" : undefined
+                  }
                   aria-hidden="true"
                 />
               }
@@ -214,78 +236,95 @@ function ManagerBody() {
         </div>
       </header>
 
-      <main className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
-        <SummaryCards counts={summary} isLoading={rowsApi.status === "loading"} />
+      <main className="flex min-h-0 w-full flex-1 overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
+          {projects.status === "error" && projects.error && (
+            <Alert variant="destructive">
+              <AlertTriangle aria-hidden="true" />
+              <AlertTitle>{projects.error.message}</AlertTitle>
+              <AlertDescription>
+                <p>
+                  {projects.error.detail ??
+                    "Check the Supabase URL and anon key."}
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={() => void projects.refresh()}
+                >
+                  <RefreshCw aria-hidden="true" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
-        {projects.status === "error" && projects.error && (
-          <Alert variant="destructive">
-            <AlertTriangle aria-hidden="true" />
-            <AlertTitle>{projects.error.message}</AlertTitle>
-            <AlertDescription>
-              <p>{projects.error.detail ?? "Check the Supabase URL and anon key."}</p>
-              <Button size="sm" variant="outline" className="mt-2" onClick={() => void projects.refresh()}>
-                <RefreshCw aria-hidden="true" />
-                Retry
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
+          {noProject ? (
+            <Alert>
+              <AlertTriangle aria-hidden="true" />
+              <AlertTitle>No project selected</AlertTitle>
+              <AlertDescription>
+                Create a project to start adding phrases.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <SearchFilters
+                query={query}
+                onQueryChange={setQuery}
+                filter={filter}
+                onFilterChange={setFilter}
+                visibleCount={visibleRows.length}
+                totalCount={effectiveRows.length}
+              />
 
-        {noProject ? (
-          <Alert>
-            <AlertTriangle aria-hidden="true" />
-            <AlertTitle>No project selected</AlertTitle>
-            <AlertDescription>
-              Create a project to start adding phrases.
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <>
-            <SearchFilters
-              query={query}
-              onQueryChange={setQuery}
-              filter={filter}
-              onFilterChange={setFilter}
-              visibleCount={visibleRows.length}
-              totalCount={effectiveRows.length}
-            />
+              <TranslationTable
+                rows={visibleRows}
+                allRowIds={allRowIds}
+                status={rowsApi.status}
+                error={rowsApi.error}
+                lockedRowIds={rowsApi.lockedRowIds}
+                moveDisabled={isFiltered}
+                isFiltered={isFiltered}
+                getDraft={autosave.getDraft}
+                getFurigana={furigana.getSegments}
+                getSaveState={autosave.getState}
+                getSaveError={autosave.getError}
+                onFieldChange={(
+                  row: TranslationRow,
+                  field: EditableField,
+                  value: string,
+                ) => autosave.setValue(row, field, value)}
+                onFieldBlur={autosave.flush}
+                onRetrySave={autosave.retry}
+                onRowUpdated={rowsApi.patchRow}
+                onAddBelow={async (row) => {
+                  await rowsApi.addRowBelow(row);
+                }}
+                onDuplicate={async (row) => {
+                  await rowsApi.duplicateRow(row);
+                }}
+                onDelete={handleDeleteRow}
+                onMove={async (row, direction) => {
+                  await rowsApi.moveRow(row.id, direction);
+                }}
+                onRetryLoad={() => void rowsApi.refresh()}
+                onAddPhrase={() => void rowsApi.addPhrase()}
+                addDisabled={!projects.selectedProjectId || isBusy}
+                showFurigana={showFurigana}
+                onToggleFurigana={() => setShowFurigana((current) => !current)}
+              />
+            </>
+          )}
+        </div>
 
-            <TranslationTable
-              rows={visibleRows}
-              allRowIds={allRowIds}
-              status={rowsApi.status}
-              error={rowsApi.error}
-              lockedRowIds={rowsApi.lockedRowIds}
-              moveDisabled={isFiltered}
-              isFiltered={isFiltered}
-              getDraft={autosave.getDraft}
-              getFurigana={furigana.getSegments}
-              getSaveState={autosave.getState}
-              getSaveError={autosave.getError}
-              onFieldChange={(row: TranslationRow, field: EditableField, value: string) =>
-                autosave.setValue(row, field, value)
-              }
-              onFieldBlur={autosave.flush}
-              onRetrySave={autosave.retry}
-              onRowUpdated={rowsApi.patchRow}
-              onAddBelow={async (row) => {
-                await rowsApi.addRowBelow(row);
-              }}
-              onDuplicate={async (row) => {
-                await rowsApi.duplicateRow(row);
-              }}
-              onDelete={handleDeleteRow}
-              onMove={async (row, direction) => {
-                await rowsApi.moveRow(row.id, direction);
-              }}
-              onRetryLoad={() => void rowsApi.refresh()}
-              onAddPhrase={() => void rowsApi.addPhrase()}
-              addDisabled={!projects.selectedProjectId || isBusy}
-              showFurigana={showFurigana}
-              onToggleFurigana={() => setShowFurigana((current) => !current)}
-            />
-          </>
-        )}
+        <SummarySidebar
+          counts={summary}
+          isLoading={rowsApi.status === "loading"}
+          open={summaryOpen}
+          onToggle={() => setSummaryOpen((current) => !current)}
+        />
       </main>
 
       <ProjectDialog
@@ -325,7 +364,12 @@ function HeaderButton({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="outline" onClick={onClick} disabled={disabled} aria-label={label}>
+        <Button
+          variant="outline"
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+        >
           {icon}
           <span className="hidden sm:inline">{label}</span>
         </Button>

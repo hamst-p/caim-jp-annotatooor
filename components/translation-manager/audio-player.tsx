@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Gauge, Pause, Play, Square } from "lucide-react";
+import { Pause, Play, Square } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -71,7 +71,6 @@ export function AudioPlayer({
               }}
               aria-label="Play at 0.75x speed"
             >
-              <Gauge aria-hidden="true" />
               0.75x
             </Button>
           </TooltipTrigger>
@@ -89,7 +88,6 @@ export function AudioPlayer({
               }}
               aria-label="Play at 0.5x speed"
             >
-              <Gauge aria-hidden="true" />
               0.5x
             </Button>
           </TooltipTrigger>
@@ -129,30 +127,36 @@ export function AudioPlayer({
           <TooltipContent>Stop</TooltipContent>
         </Tooltip>
 
+      </div>
+
+      {/* 再生時間はボタン行ではなくシークバーの横に置き、狭い列でも折り返さないようにする。 */}
+      <div className="flex items-center gap-2">
+        <Slider
+          value={[progressValue]}
+          min={0}
+          max={100}
+          step={0.1}
+          disabled={!isActive || totalDuration <= 0}
+          aria-label="Seek"
+          className="min-w-0 flex-1"
+          onValueChange={([next]) => setScrubbing((next / 100) * totalDuration)}
+          onValueCommit={([next]) => {
+            const seconds = (next / 100) * totalDuration;
+            player.seek(rowId, seconds);
+            setScrubbing(null);
+          }}
+        />
         <span
           className={cn(
-            "ml-auto text-xs tabular-nums",
+            "shrink-0 text-xs tabular-nums",
             isActive ? "text-foreground" : "text-muted-foreground",
           )}
         >
-          {isLoading ? "Loading…" : `${formatDuration(displayedTime)} / ${formatDuration(totalDuration || null)}`}
+          {isLoading
+            ? "Loading…"
+            : `${formatDuration(displayedTime)} / ${formatDuration(totalDuration || null)}`}
         </span>
       </div>
-
-      <Slider
-        value={[progressValue]}
-        min={0}
-        max={100}
-        step={0.1}
-        disabled={!isActive || totalDuration <= 0}
-        aria-label="Seek"
-        onValueChange={([next]) => setScrubbing((next / 100) * totalDuration)}
-        onValueCommit={([next]) => {
-          const seconds = (next / 100) * totalDuration;
-          player.seek(rowId, seconds);
-          setScrubbing(null);
-        }}
-      />
 
       {error && (
         <p className="text-xs text-destructive" role="alert">

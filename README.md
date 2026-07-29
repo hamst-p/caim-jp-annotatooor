@@ -42,7 +42,7 @@ README の手順どおりに構築すると、次の状態になります。
 - 行の追加 / 複製 / 削除 / 上下移動
 - Bulk Import（3 つのテキストエリアに貼り付けて一括登録・プレビュー付き）
 - 検索（Original / Japanese / Reading / audio_file_name 横断）とフィルター
-- サマリーカード、行ごとのステータスバッジ
+- 折りたたみ可能な右サイドバーの進捗サマリー、行番号の下のステータスアイコン
 - ライト / ダークモード、デスクトップ中心＋タブレット / スマートフォン対応
 
 ## 2. 必要な環境
@@ -225,7 +225,7 @@ components/
     audio-uploader.tsx           AudioUploader / DeleteAudioButton
     audio-player.tsx
     bulk-import-dialog.tsx
-    summary-cards.tsx
+    summary-sidebar.tsx
     search-filters.tsx
     row-actions.tsx
     save-status.tsx
