@@ -38,8 +38,8 @@ README の手順どおりに構築すると、次の状態になります。
 - プロジェクト単位でフレーズを管理し、切り替えできます
 - テキスト 3 列は入力停止から 600ms 後に自動保存（Saved / Saving / Unsaved changes / Save failed）
 - 音声は同時に 1 つだけ再生され、再生中の行がハイライトされます
-- 1x / 0.75x 再生、シーク、音量調整に対応
-- dnd-kit によるドラッグ＆ドロップ並び替え、行の追加 / 複製 / 削除 / 上下移動
+- 1x / 0.75x / 0.5x 再生、シーク、音量調整に対応
+- 行の追加 / 複製 / 削除 / 上下移動
 - Bulk Import（3 つのテキストエリアに貼り付けて一括登録・プレビュー付き）
 - 検索（Original / Japanese / Reading / audio_file_name 横断）とフィルター
 - サマリーカード、行ごとのステータスバッジ
@@ -150,10 +150,6 @@ npm install @supabase/supabase-js
 ```
 
 ```bash
-npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities @dnd-kit/modifiers
-```
-
-```bash
 npm install zod next-themes lucide-react
 ```
 
@@ -172,7 +168,7 @@ npx shadcn@latest add button input textarea card dialog alert-dialog select drop
 1. 任意の行の Audio 列で **Upload MP3** をクリック、またはファイルをドラッグ＆ドロップ
 2. MP3 以外や 20MB 超のファイルはアップロード前に弾かれ、Toast でエラーが出ます
 3. アップロード中は進捗バーとキャンセルボタンが表示されます
-4. 完了すると 1x / 0.75x / 一時停止 / 停止 / シークバー / 音量 / ファイル名 / サイズ / 長さ が表示されます
+4. 完了すると 1x / 0.75x / 0.5x / 一時停止 / 停止 / シークバー / 音量 / ファイル名 / サイズ / 長さ が表示されます
 5. Supabase ダッシュボードの **Storage → translation-audio** に
    `projects/{projectId}/{rowId}/{uuid}-{ファイル名}.mp3` が保存されていることを確認
 6. **Table Editor → translation_rows** で `audio_path` / `audio_file_name` / `audio_size` / `audio_duration` が入っていることを確認
@@ -244,7 +240,6 @@ hooks/
   use-row-autosave.ts            debounce / 保存状態 / 競合対策
   use-audio-player.ts            Context と行単位のセレクター
   use-audio-upload.ts            進捗・キャンセル・二重送信防止
-  use-row-reordering.ts          dnd-kit のセンサーとハンドラー
 
 lib/
   supabase/
@@ -282,7 +277,7 @@ supabase/
 - **同時再生の防止**: `AudioPlayerProvider` がアプリ全体で `HTMLAudioElement` を 1 つだけ持つため、構造的に 1 つしか再生されません
 - **URL 生成の分離**: `getAudioUrl()` は行コンポーネント側で呼び、`AudioPlayer` は URL を props で受け取るだけです
 - **アップロード**: 進捗表示とキャンセルのため Storage の REST エンドポイントへ XHR で送信します（`supabase-js` の `upload()` は進捗と AbortSignal に未対応のため）。認証情報は anon key のみで、`XMLHttpRequest` が無い環境では `supabase-js` にフォールバックします
-- **トランザクション**: Bulk Import と並び替えは 1 リクエストにまとめているため PostgREST 側で 1 トランザクションになります。明示的なトランザクション境界が欲しい場合は `supabase/schema.sql` の `bulk_insert_translation_rows` / `reorder_translation_rows` RPC に差し替えてください
+- **トランザクション**: Bulk Import と行の上下移動は 1 リクエストにまとめているため PostgREST 側で 1 トランザクションになります。明示的なトランザクション境界が欲しい場合は `supabase/schema.sql` の `bulk_insert_translation_rows` / `reorder_translation_rows` RPC に差し替えてください
 - **`any` 不使用 / TypeScript strict mode**
 
 ## スクリプト

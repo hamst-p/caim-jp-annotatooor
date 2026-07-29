@@ -1,8 +1,5 @@
 "use client";
 
-import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
-import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { AlertTriangle, Inbox, Loader2, RefreshCw, Search } from "lucide-react";
 
 import {
@@ -12,7 +9,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRowReordering } from "@/hooks/use-row-reordering";
 import { cn } from "@/lib/utils";
 import type { AppError } from "@/types/result";
 import type {
@@ -29,7 +25,7 @@ export type TranslationTableProps = {
   status: LoadState;
   error: AppError | null;
   lockedRowIds: ReadonlySet<string>;
-  dragDisabled: boolean;
+  moveDisabled: boolean;
   isFiltered: boolean;
   getDraft: (row: TranslationRow) => EditableDraft;
   getSaveState: (rowId: string) => RowSaveState;
@@ -42,7 +38,6 @@ export type TranslationTableProps = {
   onDuplicate: (row: TranslationRow) => Promise<void>;
   onDelete: (row: TranslationRow) => Promise<void>;
   onMove: (row: TranslationRow, direction: "up" | "down") => Promise<void>;
-  onReorder: (activeId: string, overId: string) => Promise<boolean>;
   onRetryLoad: () => void;
   onAddPhrase: () => void;
 };
@@ -54,7 +49,7 @@ export function TranslationTable(props: TranslationTableProps) {
     status,
     error,
     lockedRowIds,
-    dragDisabled,
+    moveDisabled,
     isFiltered,
     getDraft,
     getSaveState,
@@ -67,13 +62,9 @@ export function TranslationTable(props: TranslationTableProps) {
     onDuplicate,
     onDelete,
     onMove,
-    onReorder,
     onRetryLoad,
     onAddPhrase,
   } = props;
-
-  const { sensors, activeId, isSaving, handleDragStart, handleDragEnd, handleDragCancel } =
-    useRowReordering({ onReorder, disabled: dragDisabled });
 
   if (status === "loading") {
     return <TableSkeleton />;
@@ -97,13 +88,13 @@ export function TranslationTable(props: TranslationTableProps) {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col rounded-xl border bg-background shadow-sm">
-      {(status === "refreshing" || isSaving) && (
+      {status === "refreshing" && (
         <div
           className="absolute inset-x-0 top-0 z-30 flex items-center justify-center gap-2 rounded-t-xl bg-primary/10 py-1 text-xs"
           aria-live="polite"
         >
           <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-          {isSaving ? "Saving new order…" : "Refreshing…"}
+          Refreshing…
         </div>
       )}
 
@@ -115,45 +106,33 @@ export function TranslationTable(props: TranslationTableProps) {
           {rows.length === 0 ? (
             <EmptyState isFiltered={isFiltered} onAddPhrase={onAddPhrase} />
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-              onDragStart={handleDragStart}
-              onDragEnd={(event) => void handleDragEnd(event)}
-              onDragCancel={handleDragCancel}
-            >
-              <SortableContext items={allRowIds} strategy={verticalListSortingStrategy}>
-                <div role="rowgroup">
-                  {rows.map((row) => {
-                    const index = allRowIds.indexOf(row.id);
-                    return (
-                      <TranslationRowItem
-                        key={row.id}
-                        row={row}
-                        draft={getDraft(row)}
-                        rowNumber={index + 1}
-                        saveState={getSaveState(row.id)}
-                        saveError={getSaveError(row.id)}
-                        locked={lockedRowIds.has(row.id)}
-                        dragDisabled={dragDisabled}
-                        canMoveUp={index > 0}
-                        canMoveDown={index < allRowIds.length - 1}
-                        onFieldChange={(field, value) => onFieldChange(row, field, value)}
-                        onFieldBlur={() => onFieldBlur(row)}
-                        onRetrySave={() => onRetrySave(row)}
-                        onRowUpdated={onRowUpdated}
-                        onAddBelow={() => onAddBelow(row)}
-                        onDuplicate={() => onDuplicate(row)}
-                        onDelete={() => onDelete(row)}
-                        onMove={(direction) => onMove(row, direction)}
-                      />
-                    );
-                  })}
-                </div>
-              </SortableContext>
-              <DragOverlay>{activeId ? <div className="h-2" /> : null}</DragOverlay>
-            </DndContext>
+            <div role="rowgroup">
+              {rows.map((row) => {
+                const index = allRowIds.indexOf(row.id);
+                return (
+                  <TranslationRowItem
+                    key={row.id}
+                    row={row}
+                    draft={getDraft(row)}
+                    rowNumber={index + 1}
+                    saveState={getSaveState(row.id)}
+                    saveError={getSaveError(row.id)}
+                    locked={lockedRowIds.has(row.id)}
+                    moveDisabled={moveDisabled}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < allRowIds.length - 1}
+                    onFieldChange={(field, value) => onFieldChange(row, field, value)}
+                    onFieldBlur={() => onFieldBlur(row)}
+                    onRetrySave={() => onRetrySave(row)}
+                    onRowUpdated={onRowUpdated}
+                    onAddBelow={() => onAddBelow(row)}
+                    onDuplicate={() => onDuplicate(row)}
+                    onDelete={() => onDelete(row)}
+                    onMove={(direction) => onMove(row, direction)}
+                  />
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

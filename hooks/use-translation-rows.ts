@@ -35,7 +35,6 @@ export type UseTranslationRowsResult = {
   duplicateRow: (row: TranslationRow) => Promise<TranslationRow | null>;
   removeRow: (row: TranslationRow) => Promise<boolean>;
   moveRow: (rowId: string, direction: "up" | "down") => Promise<boolean>;
-  reorderRows: (activeId: string, overId: string) => Promise<boolean>;
   bulkInsertRows: (
     entries: Omit<TranslationRowInsert, "project_id" | "position">[],
   ) => Promise<TranslationRow[] | null>;
@@ -284,22 +283,6 @@ export function useTranslationRows(
     [persistOrder],
   );
 
-  const reorderRows = useCallback(
-    async (activeId: string, overId: string) => {
-      if (activeId === overId) return true;
-      const previous = rowsRef.current;
-      const from = previous.findIndex((row) => row.id === activeId);
-      const to = previous.findIndex((row) => row.id === overId);
-      if (from < 0 || to < 0) return false;
-
-      const next = [...previous];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return persistOrder(next, previous);
-    },
-    [persistOrder],
-  );
-
   const bulkInsertRows = useCallback(
     async (entries: Omit<TranslationRowInsert, "project_id" | "position">[]) => {
       if (!projectId) {
@@ -355,7 +338,6 @@ export function useTranslationRows(
     duplicateRow,
     removeRow,
     moveRow,
-    reorderRows,
     bulkInsertRows,
   };
 }

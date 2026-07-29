@@ -254,7 +254,7 @@ function ManagerBody() {
               status={rowsApi.status}
               error={rowsApi.error}
               lockedRowIds={rowsApi.lockedRowIds}
-              dragDisabled={isFiltered}
+              moveDisabled={isFiltered}
               isFiltered={isFiltered}
               getDraft={autosave.getDraft}
               getSaveState={autosave.getState}
@@ -275,7 +275,6 @@ function ManagerBody() {
               onMove={async (row, direction) => {
                 await rowsApi.moveRow(row.id, direction);
               }}
-              onReorder={rowsApi.reorderRows}
               onRetryLoad={() => void rowsApi.refresh()}
               onAddPhrase={() => void rowsApi.addPhrase()}
             />

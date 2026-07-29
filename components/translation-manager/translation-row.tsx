@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Music } from "lucide-react";
+import { Music } from "lucide-react";
 
 import { AudioPlayer } from "@/components/translation-manager/audio-player";
 import { AudioUploader, DeleteAudioButton } from "@/components/translation-manager/audio-uploader";
@@ -11,7 +9,6 @@ import { EditableTextCell } from "@/components/translation-manager/editable-text
 import { RowActions } from "@/components/translation-manager/row-actions";
 import { RowSaveIndicator } from "@/components/translation-manager/save-status";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAudioPlayer } from "@/hooks/use-audio-player";
 import { formatDuration } from "@/lib/audio/duration";
 import { getAudioUrl } from "@/lib/supabase/storage";
@@ -32,7 +29,7 @@ export function TranslationRowItem({
   saveState,
   saveError,
   locked,
-  dragDisabled,
+  moveDisabled,
   canMoveUp,
   canMoveDown,
   onFieldChange,
@@ -50,7 +47,7 @@ export function TranslationRowItem({
   saveState: RowSaveState;
   saveError: AppError | null;
   locked: boolean;
-  dragDisabled: boolean;
+  moveDisabled: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
   onFieldChange: (field: EditableField, value: string) => void;
@@ -62,9 +59,6 @@ export function TranslationRowItem({
   onDelete: () => Promise<void>;
   onMove: (direction: "up" | "down") => Promise<void>;
 }) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id: row.id, disabled: dragDisabled || locked });
-
   const player = useAudioPlayer();
   const isRowPlaying = player.activeRowId === row.id && player.isPlaying;
   const isRowLoaded = player.activeRowId === row.id;
@@ -76,8 +70,6 @@ export function TranslationRowItem({
 
   return (
     <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
       data-row-id={row.id}
       className={cn(
         ROW_GRID_CLASS,
@@ -89,38 +81,11 @@ export function TranslationRowItem({
         saveState === "saving" && "bg-muted/40",
         saveState === "error" && "bg-destructive/5",
         locked && "pointer-events-none opacity-50",
-        isDragging && "relative z-20 rounded-lg bg-background opacity-90 shadow-lg",
       )}
     >
-      {/* 行番号 + ドラッグハンドル (左端に固定) */}
+      {/* 行番号 (左端に固定) */}
       <div className="sticky left-0 z-10 flex flex-col items-center gap-1 border-r bg-inherit px-1 py-2">
         <span className="text-xs font-medium text-muted-foreground tabular-nums">{rowNumber}</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              ref={setActivatorNodeRef}
-              {...attributes}
-              {...listeners}
-              disabled={dragDisabled || locked}
-              aria-label={`Reorder row ${rowNumber}`}
-              className={cn(
-                "rounded-md p-1 text-muted-foreground transition-colors",
-                "hover:bg-muted hover:text-foreground",
-                "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-                "disabled:cursor-not-allowed disabled:opacity-40",
-                !dragDisabled && !locked && "cursor-grab active:cursor-grabbing",
-              )}
-            >
-              <GripVertical className="size-4" aria-hidden="true" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {dragDisabled
-              ? "Clear the search and filter to reorder rows"
-              : "Drag to reorder (or use arrow keys)"}
-          </TooltipContent>
-        </Tooltip>
         {isRowPlaying && (
           <Music
             className="size-3.5 animate-pulse text-sky-600 dark:text-sky-400"
@@ -184,7 +149,7 @@ export function TranslationRowItem({
           value={draft.reading}
           placeholder="Enter Japanese pronunciation"
           disabled={locked}
-          className="text-sm"
+          className="font-mono text-sm"
           onChange={(value) => onFieldChange("reading", value)}
           onBlur={onFieldBlur}
         />
@@ -221,8 +186,8 @@ export function TranslationRowItem({
         <RowActions
           row={row}
           rowNumber={rowNumber}
-          canMoveUp={canMoveUp && !dragDisabled}
-          canMoveDown={canMoveDown && !dragDisabled}
+          canMoveUp={canMoveUp && !moveDisabled}
+          canMoveDown={canMoveDown && !moveDisabled}
           disabled={locked}
           onAddBelow={onAddBelow}
           onDuplicate={onDuplicate}
