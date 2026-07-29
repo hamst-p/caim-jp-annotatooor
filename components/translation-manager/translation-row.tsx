@@ -23,7 +23,7 @@ import type { EditableDraft, EditableField, RowSaveState, TranslationRow } from 
 
 /** ヘッダー行とデータ行で共有する 4 列 + 行番号 + 操作列のグリッド。 */
 export const ROW_GRID_CLASS =
-  "grid w-full min-w-[66rem] grid-cols-[3rem_minmax(13rem,1fr)_minmax(13rem,1fr)_minmax(13rem,1fr)_minmax(20rem,0.9fr)_3rem]";
+  "grid w-full min-w-[54rem] grid-cols-[2.75rem_minmax(11rem,1.15fr)_minmax(11rem,1fr)_minmax(10rem,0.9fr)_minmax(16rem,1fr)_2.75rem]";
 
 export function TranslationRowItem({
   row,
@@ -184,7 +184,7 @@ export function TranslationRowItem({
           value={draft.reading}
           placeholder="Enter Japanese pronunciation"
           disabled={locked}
-          className="font-mono text-[0.8rem]"
+          className="text-sm"
           onChange={(value) => onFieldChange("reading", value)}
           onBlur={onFieldBlur}
         />

@@ -130,9 +130,9 @@ function ManagerBody() {
   const noProject = projects.status === "loaded" && projects.projects.length === 0;
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-3 px-4 py-3 xl:flex-row xl:items-center xl:gap-4">
+    <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+      <header className="z-40 shrink-0 border-b bg-background/95 backdrop-blur">
+        <div className="flex w-full flex-col gap-3 px-3 py-3 sm:px-4 xl:flex-row xl:items-center xl:gap-4">
           <div className="flex items-center gap-3">
             <h1 className="font-heading text-base font-semibold whitespace-nowrap">
               Translation Audio Manager
@@ -212,7 +212,7 @@ function ManagerBody() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-[120rem] flex-1 flex-col gap-4 px-4 py-4">
+      <main className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
         <SummaryCards counts={summary} isLoading={rowsApi.status === "loading"} />
 
         {projects.status === "error" && projects.error && (

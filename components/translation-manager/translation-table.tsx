@@ -96,7 +96,7 @@ export function TranslationTable(props: TranslationTableProps) {
   }
 
   return (
-    <div className="relative rounded-xl border">
+    <div className="relative flex min-h-0 flex-1 flex-col rounded-xl border bg-background shadow-sm">
       {(status === "refreshing" || isSaving) && (
         <div
           className="absolute inset-x-0 top-0 z-30 flex items-center justify-center gap-2 rounded-t-xl bg-primary/10 py-1 text-xs"
@@ -107,9 +107,9 @@ export function TranslationTable(props: TranslationTableProps) {
         </div>
       )}
 
-      {/* 縦横ともにこのコンテナ内でスクロールさせ、ヘッダーと行番号を固定表示する。 */}
-      <div className="max-h-[calc(100svh-21rem)] min-h-[16rem] overflow-auto rounded-xl">
-        <div>
+      {/* 残りの画面高を使い、縦横のスクロールはテーブル内に収める。 */}
+      <div className="min-h-0 flex-1 overflow-auto rounded-xl">
+        <div className="min-w-full">
           <TableHeader />
 
           {rows.length === 0 ? (
@@ -167,7 +167,7 @@ function TableHeader() {
       role="row"
       className={cn(
         ROW_GRID_CLASS,
-        "sticky top-0 z-20 border-b bg-muted/95 text-xs font-medium backdrop-blur",
+        "sticky top-0 z-20 border-b bg-muted/95 text-sm font-bold backdrop-blur",
       )}
     >
       <div className="sticky left-0 z-10 border-r bg-muted/95 px-2 py-2 text-center text-muted-foreground">
@@ -224,10 +224,10 @@ function EmptyState({
 
 function TableSkeleton() {
   return (
-    <div className="rounded-xl border">
-      {/* 縦横ともにこのコンテナ内でスクロールさせ、ヘッダーと行番号を固定表示する。 */}
-      <div className="max-h-[calc(100svh-21rem)] min-h-[16rem] overflow-auto rounded-xl">
-        <div>
+    <div className="flex min-h-0 flex-1 flex-col rounded-xl border bg-background shadow-sm">
+      {/* 読み込み中も完成後と同じ高さを使い、レイアウトのずれを防ぐ。 */}
+      <div className="min-h-0 flex-1 overflow-auto rounded-xl">
+        <div className="min-w-full">
           <TableHeader />
           {Array.from({ length: 5 }).map((_, index) => (
             <div key={index} className={cn(ROW_GRID_CLASS, "border-b last:border-b-0")}>
