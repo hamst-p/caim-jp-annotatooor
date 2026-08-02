@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Eye, EyeOff, Inbox, Loader2, Plus, RefreshCw, Search } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, Inbox, Loader2, Plus, RefreshCw } from "lucide-react";
 
 import {
   ROW_GRID_CLASS,
@@ -27,8 +27,6 @@ export type TranslationTableProps = {
   status: LoadState;
   error: AppError | null;
   lockedRowIds: ReadonlySet<string>;
-  moveDisabled: boolean;
-  isFiltered: boolean;
   getDraft: (row: TranslationRow) => EditableDraft;
   getFurigana: (text: string) => FuriganaSegment[] | null;
   getSaveState: (rowId: string) => RowSaveState;
@@ -56,8 +54,6 @@ export function TranslationTable(props: TranslationTableProps) {
     status,
     error,
     lockedRowIds,
-    moveDisabled,
-    isFiltered,
     getDraft,
     getFurigana,
     getSaveState,
@@ -115,7 +111,7 @@ export function TranslationTable(props: TranslationTableProps) {
           <TableHeader showFurigana={showFurigana} onToggleFurigana={onToggleFurigana} />
 
           {rows.length === 0 ? (
-            <EmptyState isFiltered={isFiltered} onAddPhrase={onAddPhrase} />
+            <EmptyState onAddPhrase={onAddPhrase} />
           ) : (
             <div role="rowgroup">
               {rows.map((row) => {
@@ -130,7 +126,6 @@ export function TranslationTable(props: TranslationTableProps) {
                     saveError={getSaveError(row.id)}
                     furigana={showFurigana ? getFurigana(getDraft(row).japanese) : null}
                     locked={lockedRowIds.has(row.id)}
-                    moveDisabled={moveDisabled}
                     canMoveUp={index > 0}
                     canMoveDown={index < allRowIds.length - 1}
                     onFieldChange={(field, value) => onFieldChange(row, field, value)}
@@ -262,39 +257,19 @@ function TableHeader({
   );
 }
 
-function EmptyState({
-  isFiltered,
-  onAddPhrase,
-}: {
-  isFiltered: boolean;
-  onAddPhrase: () => void;
-}) {
+function EmptyState({ onAddPhrase }: { onAddPhrase: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-      {isFiltered ? (
-        <>
-          <Search className="size-6 text-muted-foreground" aria-hidden="true" />
-          <div>
-            <p className="font-medium">No phrases match the current search or filter</p>
-            <p className="text-sm text-muted-foreground">
-              Clear the search box or switch the filter back to “All”.
-            </p>
-          </div>
-        </>
-      ) : (
-        <>
-          <Inbox className="size-6 text-muted-foreground" aria-hidden="true" />
-          <div>
-            <p className="font-medium">No phrases yet</p>
-            <p className="text-sm text-muted-foreground">
-              Add a single phrase, or paste a whole script with Bulk Import.
-            </p>
-          </div>
-          <Button size="sm" onClick={onAddPhrase}>
-            Add Phrase
-          </Button>
-        </>
-      )}
+      <Inbox className="size-6 text-muted-foreground" aria-hidden="true" />
+      <div>
+        <p className="font-medium">No phrases yet</p>
+        <p className="text-sm text-muted-foreground">
+          Add a single phrase, or paste a whole script with Bulk Import.
+        </p>
+      </div>
+      <Button size="sm" onClick={onAddPhrase}>
+        Add Phrase
+      </Button>
     </div>
   );
 }

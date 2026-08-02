@@ -16,8 +16,8 @@ import {
   type ProjectDialogMode,
 } from "@/components/translation-manager/project-dialog";
 import { ProjectSelector } from "@/components/translation-manager/project-selector";
+import { PhraseListToolbar } from "@/components/translation-manager/phrase-list-toolbar";
 import { SaveStatus } from "@/components/translation-manager/save-status";
-import { SearchFilters } from "@/components/translation-manager/search-filters";
 import { SummarySidebar } from "@/components/translation-manager/summary-sidebar";
 import { ThemeToggle } from "@/components/translation-manager/theme-toggle";
 import { TranslationTable } from "@/components/translation-manager/translation-table";
@@ -33,16 +33,8 @@ import { useFurigana } from "@/hooks/use-furigana";
 import { useRowAutosave } from "@/hooks/use-row-autosave";
 import { useTranslationRows } from "@/hooks/use-translation-rows";
 import { getMissingSupabaseEnvKeys } from "@/lib/supabase/client";
-import {
-  matchesFilter,
-  matchesQuery,
-  summarizeRows,
-} from "@/lib/utils/row-status";
-import type {
-  EditableField,
-  RowFilter,
-  TranslationRow,
-} from "@/types/translation";
+import { summarizeRows } from "@/lib/utils/row-status";
+import type { EditableField, TranslationRow } from "@/types/translation";
 
 export function TranslationManager() {
   const missingEnv = getMissingSupabaseEnvKeys();
@@ -60,8 +52,6 @@ function ManagerBody() {
   const projects = useProjects(true);
   const rowsApi = useTranslationRows(projects.selectedProjectId, true);
 
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<RowFilter>("all");
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [projectDialogMode, setProjectDialogMode] =
     useState<ProjectDialogMode>("create");
@@ -89,18 +79,10 @@ function ManagerBody() {
 
   const autosave = useRowAutosave({ onSaved: handleSaved });
 
-  // 未保存の下書きを反映した「表示上の行」。検索・フィルター・集計はこれを使う。
+  // 未保存の下書きを反映した「表示上の行」。集計にもこれを使う。
   const effectiveRows = useMemo(
     () => rowsApi.rows.map((row) => ({ ...row, ...autosave.getDraft(row) })),
     [rowsApi.rows, autosave],
-  );
-
-  const visibleRows = useMemo(
-    () =>
-      effectiveRows.filter(
-        (row) => matchesFilter(row, filter) && matchesQuery(row, query),
-      ),
-    [effectiveRows, filter, query],
   );
 
   const summary = useMemo(() => summarizeRows(effectiveRows), [effectiveRows]);
@@ -116,7 +98,6 @@ function ManagerBody() {
     () => rowsApi.rows.map((row) => row.id),
     [rowsApi.rows],
   );
-  const isFiltered = query.trim().length > 0 || filter !== "all";
 
   const handleDeleteRow = useCallback(
     async (row: TranslationRow) => {
@@ -277,23 +258,14 @@ function ManagerBody() {
                 showFurigana={showFurigana}
               />
 
-              <SearchFilters
-                query={query}
-                onQueryChange={setQuery}
-                filter={filter}
-                onFilterChange={setFilter}
-                visibleCount={visibleRows.length}
-                totalCount={effectiveRows.length}
-              />
+              <PhraseListToolbar totalCount={effectiveRows.length} />
 
               <TranslationTable
-                rows={visibleRows}
+                rows={effectiveRows}
                 allRowIds={allRowIds}
                 status={rowsApi.status}
                 error={rowsApi.error}
                 lockedRowIds={rowsApi.lockedRowIds}
-                moveDisabled={isFiltered}
-                isFiltered={isFiltered}
                 getDraft={autosave.getDraft}
                 getFurigana={furigana.getSegments}
                 getSaveState={autosave.getState}

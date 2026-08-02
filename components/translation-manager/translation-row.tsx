@@ -38,7 +38,6 @@ export function TranslationRowItem({
   saveError,
   furigana,
   locked,
-  moveDisabled,
   canMoveUp,
   canMoveDown,
   onFieldChange,
@@ -58,7 +57,6 @@ export function TranslationRowItem({
   /** Japanese 列のふりがな。未取得なら null。 */
   furigana: FuriganaSegment[] | null;
   locked: boolean;
-  moveDisabled: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
   onFieldChange: (field: EditableField, value: string) => void;
@@ -206,8 +204,8 @@ export function TranslationRowItem({
         <RowActions
           row={row}
           rowNumber={rowNumber}
-          canMoveUp={canMoveUp && !moveDisabled}
-          canMoveDown={canMoveDown && !moveDisabled}
+          canMoveUp={canMoveUp}
+          canMoveDown={canMoveDown}
           disabled={locked}
           hasAudio={Boolean(row.audio_path)}
           audioBusy={audio.isBusy}

@@ -63,15 +63,6 @@ export type RowStatus =
   | "reading-missing"
   | "audio-missing";
 
-/** 一覧のフィルター。 */
-export type RowFilter =
-  | "all"
-  | "complete"
-  | "audio-uploaded"
-  | "audio-missing"
-  | "japanese-missing"
-  | "reading-missing";
-
 /** 行ごとの保存状態。 */
 export type RowSaveState = "saved" | "unsaved" | "saving" | "error";
 

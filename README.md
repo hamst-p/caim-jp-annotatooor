@@ -226,7 +226,7 @@ components/
     audio-player.tsx
     bulk-import-dialog.tsx
     summary-sidebar.tsx
-    search-filters.tsx
+    phrase-list-toolbar.tsx
     row-actions.tsx
     save-status.tsx
     connection-status.tsx

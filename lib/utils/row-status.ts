@@ -1,4 +1,4 @@
-import type { RowFilter, RowStatus, TranslationRow } from "@/types/translation";
+import type { RowStatus, TranslationRow } from "@/types/translation";
 
 /** 下書き (未保存の入力) を反映した「見た目上の行」。 */
 export type EffectiveRow = TranslationRow;
@@ -36,61 +36,6 @@ export const ROW_STATUS_LABEL: Record<RowStatus, string> = {
   "reading-missing": "Reading missing",
   "audio-missing": "Audio missing",
 };
-
-export const ROW_FILTER_LABEL: Record<RowFilter, string> = {
-  all: "All",
-  complete: "Complete",
-  "audio-uploaded": "Audio uploaded",
-  "audio-missing": "Audio missing",
-  "japanese-missing": "Japanese missing",
-  "reading-missing": "Reading missing",
-};
-
-export const ROW_FILTERS: readonly RowFilter[] = [
-  "all",
-  "complete",
-  "audio-uploaded",
-  "audio-missing",
-  "japanese-missing",
-  "reading-missing",
-] as const;
-
-export function matchesFilter(row: EffectiveRow, filter: RowFilter): boolean {
-  switch (filter) {
-    case "all":
-      return true;
-    case "complete":
-      return isComplete(row);
-    case "audio-uploaded":
-      return hasAudio(row);
-    case "audio-missing":
-      return !hasAudio(row);
-    case "japanese-missing":
-      return !filled(row.japanese);
-    case "reading-missing":
-      return !filled(row.reading);
-    default:
-      return true;
-  }
-}
-
-/**
- * Original / Japanese / Reading / audio_file_name を横断検索する。
- *
- * 現在はクライアント側で絞り込む。将来 Supabase 側の全文検索へ移す場合は、
- * この関数を `lib/supabase/translation-rows.ts` の検索クエリへ差し替えればよい
- * (呼び出し側は「検索語 → 行の配列」しか知らない)。
- */
-export function matchesQuery(row: EffectiveRow, query: string): boolean {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return true;
-
-  const haystack = [row.original, row.japanese, row.reading, row.audio_file_name ?? ""]
-    .join("\n")
-    .toLowerCase();
-
-  return haystack.includes(needle);
-}
 
 export type SummaryCounts = {
   total: number;
