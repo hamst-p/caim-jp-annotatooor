@@ -68,28 +68,53 @@ export function ReadingCell({
   const readSelection = useCallback(() => {
     const root = rootRef.current;
     const domSelection = window.getSelection();
-    if (!root || !domSelection || domSelection.isCollapsed) {
+    if (!root || !domSelection || domSelection.isCollapsed || domSelection.rangeCount === 0) {
       setSelection(null);
       return;
     }
 
     const range = domSelection.getRangeAt(0);
-    if (!root.contains(range.commonAncestorContainer)) {
+
+    // 選択がこのセルにまったく掛かっていなければ無視する。
+    const intersectsRoot =
+      typeof range.intersectsNode === "function"
+        ? range.intersectsNode(root)
+        : domSelection.containsNode(root, true);
+    if (!intersectsRoot) {
       setSelection(null);
       return;
     }
 
-    const anchor = offsetInText(root, range.startContainer, range.startOffset, value.length);
-    const focus = offsetInText(root, range.endContainer, range.endOffset, value.length);
-    if (anchor === null || focus === null) {
+    // ドラッグの終点はセルの余白 (padding) の上で離されることが多い。
+    // その場合 startContainer / endContainer がセルの外側になるので、
+    // 「外側にはみ出た端点」はテキストの先頭 / 末尾に丸める。
+    const startInRoot = root.contains(range.startContainer);
+    const endInRoot = root.contains(range.endContainer);
+
+    const start = startInRoot
+      ? offsetInText(root, range.startContainer, range.startOffset, value.length)
+      : 0;
+    const end = endInRoot
+      ? offsetInText(root, range.endContainer, range.endOffset, value.length)
+      : value.length;
+
+    if (start === null || end === null) {
       setSelection(null);
       return;
     }
 
-    const start = Math.min(anchor, focus);
-    const end = Math.max(anchor, focus);
     setSelection(end > start ? { start, end } : null);
   }, [value.length]);
+
+  // mouseup をこのセルの要素だけに付けると、選択の終点がセルの余白
+  // (padding) やセル外に出た瞬間にイベントを取りこぼし、パレットが
+  // まったく出なくなる。document で拾い、セルに掛かっているかどうかは
+  // readSelection 側の Range.intersectsNode で判定する。
+  useEffect(() => {
+    if (disabled) return;
+    document.addEventListener("mouseup", readSelection);
+    return () => document.removeEventListener("mouseup", readSelection);
+  }, [disabled, readSelection]);
 
   if (isEditing && !disabled) {
     return (
@@ -117,7 +142,6 @@ export function ReadingCell({
       <div
         id={id}
         aria-label={`${label}. Select text to colour it, or double-click to edit.`}
-        onMouseUp={readSelection}
         onKeyUp={readSelection}
         onDoubleClick={() => !disabled && setIsEditing(true)}
         className={cn(
