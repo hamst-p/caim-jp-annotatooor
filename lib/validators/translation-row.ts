@@ -33,10 +33,25 @@ export const translationRowInsertSchema = z.object({
   position: z.number().int().nonnegative(),
 });
 
+export const highlightColorSchema = z.enum([
+  "amber",
+  "green",
+  "blue",
+  "purple",
+  "rose",
+]);
+
+export const readingHighlightSchema = z.object({
+  start: z.number().int().nonnegative(),
+  end: z.number().int().nonnegative(),
+  color: highlightColorSchema,
+});
+
 export const translationRowUpdateSchema = z.object({
   original: cellSchema.optional(),
   japanese: cellSchema.optional(),
   reading: cellSchema.optional(),
+  reading_highlights: z.array(readingHighlightSchema).max(200).optional(),
   audio_path: z.string().nullable().optional(),
   audio_file_name: z.string().nullable().optional(),
   audio_size: z.number().int().nonnegative().nullable().optional(),

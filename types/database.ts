@@ -47,6 +47,7 @@ export type Database = {
           original: string;
           japanese: string;
           reading: string;
+          reading_highlights: Json;
           audio_path: string | null;
           audio_file_name: string | null;
           audio_size: number | null;
@@ -61,6 +62,7 @@ export type Database = {
           original?: string;
           japanese?: string;
           reading?: string;
+          reading_highlights?: Json;
           audio_path?: string | null;
           audio_file_name?: string | null;
           audio_size?: number | null;
@@ -75,6 +77,7 @@ export type Database = {
           original?: string;
           japanese?: string;
           reading?: string;
+          reading_highlights?: Json;
           audio_path?: string | null;
           audio_file_name?: string | null;
           audio_size?: number | null;

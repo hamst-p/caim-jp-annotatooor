@@ -1,9 +1,20 @@
+/** Reading 列の色分けに使う色。 */
+export type HighlightColorId = "amber" | "green" | "blue" | "purple" | "rose";
+
+/** Reading テキストの [start, end) に色を付ける指定。 */
+export type ReadingHighlight = {
+  start: number;
+  end: number;
+  color: HighlightColorId;
+};
+
 export type TranslationRow = {
   id: string;
   project_id: string;
   original: string;
   japanese: string;
   reading: string;
+  reading_highlights: ReadingHighlight[];
   audio_path: string | null;
   audio_file_name: string | null;
   audio_size: number | null;
@@ -18,6 +29,7 @@ export type TranslationRowInsert = {
   original?: string;
   japanese?: string;
   reading?: string;
+  reading_highlights?: ReadingHighlight[];
   audio_path?: string | null;
   audio_file_name?: string | null;
   audio_size?: number | null;

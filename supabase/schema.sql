@@ -31,6 +31,17 @@ create table if not exists public.translation_rows (
 );
 
 -- ---------------------------------------------------------------------------
+-- Reading colour highlights
+--
+-- Ranges of the romaji reading that are tinted to show where to pause when
+-- reading aloud. Stored as [{"start": 0, "end": 12, "color": "amber"}, ...].
+--
+-- Added after the initial release: run this on an existing database too.
+-- ---------------------------------------------------------------------------
+alter table public.translation_rows
+  add column if not exists reading_highlights jsonb not null default '[]'::jsonb;
+
+-- ---------------------------------------------------------------------------
 -- Indexes (filtering by project, ordering by position)
 -- ---------------------------------------------------------------------------
 create index if not exists translation_rows_project_id_idx

@@ -1,16 +1,44 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { normalizeHighlights } from "@/lib/utils/reading-highlight";
 import { deleteAudioFiles } from "@/lib/supabase/storage";
 import {
   validateTranslationRowInsert,
   validateTranslationRowUpdate,
 } from "@/lib/validators/translation-row";
+import type { Database } from "@/types/database";
 import { fail, ok, toAppError, type Result } from "@/types/result";
 import type {
+  ReadingHighlight,
   RowPosition,
   TranslationRow,
   TranslationRowInsert,
   TranslationRowUpdate,
 } from "@/types/translation";
+
+type DbTranslationRow = Database["public"]["Tables"]["translation_rows"]["Row"];
+
+/**
+ * jsonb の中身は DB 側では保証されないので、アプリへ渡す前に検証する。
+ * reading_highlights 列がまだ無い DB でも空配列として扱えるようにしている。
+ */
+function toTranslationRow(row: DbTranslationRow): TranslationRow {
+  const raw: unknown = row.reading_highlights;
+  const candidates: ReadingHighlight[] = Array.isArray(raw)
+    ? (raw.filter(
+        (item): item is ReadingHighlight =>
+          typeof item === "object" &&
+          item !== null &&
+          typeof (item as ReadingHighlight).start === "number" &&
+          typeof (item as ReadingHighlight).end === "number" &&
+          typeof (item as ReadingHighlight).color === "string",
+      ) as ReadingHighlight[])
+    : [];
+
+  return {
+    ...row,
+    reading_highlights: normalizeHighlights(candidates, row.reading.length),
+  };
+}
 
 /** 選択中プロジェクトの行を position 昇順で取得する。 */
 export async function getTranslationRows(
@@ -28,7 +56,7 @@ export async function getTranslationRows(
     if (error) {
       return fail("database", "Failed to load phrases", error.message, error);
     }
-    return ok(data ?? []);
+    return ok((data ?? []).map(toTranslationRow));
   } catch (cause) {
     return { ok: false, error: toAppError("database", "Failed to load phrases", cause) };
   }
@@ -72,7 +100,7 @@ export async function createTranslationRow(
     if (error) {
       return fail("database", "Failed to add the phrase", error.message, error);
     }
-    return ok(data);
+    return ok(toTranslationRow(data));
   } catch (cause) {
     return { ok: false, error: toAppError("database", "Failed to add the phrase", cause) };
   }
@@ -99,7 +127,7 @@ export async function createTranslationRows(
     if (error) {
       return fail("database", "Bulk import failed", error.message, error);
     }
-    return ok(data ?? []);
+    return ok((data ?? []).map(toTranslationRow));
   } catch (cause) {
     return { ok: false, error: toAppError("database", "Bulk import failed", cause) };
   }
@@ -128,7 +156,7 @@ export async function updateTranslationRow(
     if (error) {
       return fail("database", "Failed to save changes", error.message, error);
     }
-    return ok(data);
+    return ok(toTranslationRow(data));
   } catch (cause) {
     return { ok: false, error: toAppError("database", "Failed to save changes", cause) };
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { AlertTriangle, FolderPlus, RefreshCw, Upload } from "lucide-react";
+import { AlertTriangle, Captions, FolderPlus, RefreshCw, Upload } from "lucide-react";
 
 import { AudioPlayerProvider } from "@/components/translation-manager/audio-player-provider";
 import {
@@ -145,7 +145,8 @@ function ManagerBody() {
       <header className="z-40 shrink-0 border-b bg-background/95 backdrop-blur">
         <div className="flex w-full flex-col gap-3 px-3 py-3 sm:px-4 xl:flex-row xl:items-center xl:gap-4">
           <div className="flex items-center gap-3">
-            <h1 className="font-heading text-base font-semibold whitespace-nowrap">
+            <h1 className="flex items-center gap-2 font-heading text-base font-semibold whitespace-nowrap">
+              <Captions className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
               Translation Audio Manager
             </h1>
             <div className="ml-auto flex items-center gap-2 xl:hidden">

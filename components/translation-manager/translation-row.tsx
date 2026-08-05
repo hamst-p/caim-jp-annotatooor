@@ -11,11 +11,13 @@ import {
   DeleteAudioDialog,
 } from "@/components/translation-manager/audio-uploader";
 import { EditableTextCell } from "@/components/translation-manager/editable-text-cell";
+import { ReadingCell } from "@/components/translation-manager/reading-cell";
 import { JapaneseCell } from "@/components/translation-manager/japanese-cell";
 import { RowActions } from "@/components/translation-manager/row-actions";
 import { RowStatusIndicator } from "@/components/translation-manager/row-status-indicator";
 import { RowSaveIndicator } from "@/components/translation-manager/save-status";
 import { useAudioPlayer } from "@/hooks/use-audio-player";
+import { useReadingHighlights } from "@/hooks/use-reading-highlights";
 import { useRowAudioActions } from "@/hooks/use-row-audio-actions";
 import { formatDuration } from "@/lib/audio/duration";
 import type { FuriganaSegment } from "@/lib/furigana/segments";
@@ -80,6 +82,7 @@ export function TranslationRowItem({
   // アップロード / 差し替え / 削除は行に 1 セットだけ持ち、
   // ドロップゾーンと「⋮」メニューの両方から使う。
   const audio = useRowAudioActions({ row, onUpdated: onRowUpdated });
+  const reading = useReadingHighlights({ row, onUpdated: onRowUpdated });
 
   return (
     <div
@@ -144,15 +147,17 @@ export function TranslationRowItem({
 
       {/* Reading */}
       <div className="border-r px-2 py-2">
-        <EditableTextCell
+        <ReadingCell
           id={`reading-${row.id}`}
           label={`Romaji reading, row ${rowNumber}`}
           value={draft.reading}
           placeholder="Enter Japanese pronunciation"
           disabled={locked}
-          className="font-mono text-sm"
+          highlights={reading.highlights}
           onChange={(value) => onFieldChange("reading", value)}
           onBlur={onFieldBlur}
+          onApplyColor={reading.applyColor}
+          onClearColors={reading.clearAll}
         />
       </div>
 
